@@ -1,4 +1,4 @@
-Copyright (C) 2016 Terry D. Ott <Terry.Ott@gmail.com>
+Copyright © 2016 Terry D. Ott <Terry.Ott@gmail.com>
 
 Dependencies:
 
