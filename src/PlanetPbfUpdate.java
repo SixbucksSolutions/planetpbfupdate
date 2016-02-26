@@ -4,8 +4,10 @@ import crosby.binary.file.*;
 
 import java.util.List;
 import java.io.*;
-
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Date;
+import java.util.Calendar;
+import java.text.SimpleDateFormat;
 
 public class PlanetPbfUpdate
 {
@@ -58,6 +60,22 @@ public class PlanetPbfUpdate
 
 					if ( headerBlock.hasOsmosisReplicationTimestamp() == true )
 					{
+						long osmosisTimestamp = 
+							headerBlock.getOsmosisReplicationTimestamp();
+
+						/*
+						System.out.println("File timestamp: " + 
+							osmosisTimestamp );
+						*/
+						Calendar calendar = Calendar.getInstance();
+						calendar.setTime( new Date(osmosisTimestamp * 1000) );
+						calendar.add(Calendar.DATE, 1);
+
+						SimpleDateFormat isoFormat = 
+							new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+						System.out.println( "File timestamp: " + 
+							isoFormat.format( calendar.getTime() ) );
 
 					}
 					else
