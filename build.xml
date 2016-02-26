@@ -9,7 +9,7 @@
 
 	<path id="classpath">
 		<fileset dir="${lib.dir}" 		includes="**/*.jar"/>
-		<fileset dir="${javalib.dir}" 	file="protobuf.jar"/>
+		<fileset dir="${javalib.dir}" 	includes="protobuf.jar"/>
 	</path>	
 
 	<target name="compile">
