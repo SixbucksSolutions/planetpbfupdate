@@ -1,0 +1,38 @@
+<project>
+	<target name="clean">
+		<delete dir="build"/>
+	</target>
+
+	<property name="lib.dir" value="libs"/>
+
+	<property name="javalib.dir" value="/usr/share/java"/>
+
+	<path id="classpath">
+		<fileset dir="${lib.dir}" 		includes="**/*.jar"/>
+		<fileset dir="${javalib.dir}" 	file="protobuf.jar"/>
+	</path>	
+
+	<target name="compile">
+		<mkdir dir="build/classes"/>
+		<javac srcdir="src" destdir="build/classes" classpathref="classpath" 
+			includeantruntime="false"/>
+	</target>
+
+	<target name="jar" depends="compile">
+		<mkdir dir="build/jar"/>
+		<jar destfile="build/jar/planetpbfupdate.jar" basedir="build/classes">
+			<manifest>
+				<attribute name="Main-Class" value="PlanetPbfUpdate"/>
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="run" depends="jar">
+		<java fork="true" classname="PlanetPbfUpdate">
+			<classpath>
+				<path refid="classpath"/>
+				<path location="build/jar/planetpbfupdate.jar"/>
+			</classpath>
+		</java>
+	</target>
+</project>
