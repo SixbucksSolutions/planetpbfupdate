@@ -1,101 +1,68 @@
-import crosby.binary.*;
-import crosby.binary.Osmformat.*;
-import crosby.binary.file.*;
+package planetpbfupdate;
 
-import java.util.List;
+import crosby.binary.file.*;
 import java.io.*;
-import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.Date;
 import java.util.Calendar;
 import java.text.SimpleDateFormat;
+import java.net.*;
 
 public class PlanetPbfUpdate
 {
    	public static void main(String[] args)
 	{
-		//System.out.println("Booya");
-		BlockReaderAdapter blockReader = new PbfParser();
-		InputStream input;
+		String filename;
+		if ( args.length == 1 )
+		{
+			filename = args[0]; }
+		else
+		{
+			System.err.println("No PBF file specified");
+			return;
+		}
+
 		try
 		{
-			input = new FileInputStream("/home/tdo/tmp/pbf/monaco-latest.osm.pbf");
-			new BlockInputStream(input, blockReader).process();
-		} 
+			OsmPbfParser pbfParser = new OsmPbfParser( filename );
+			System.out.println("Opened PBF: " + filename );
+			Calendar pbfTimestamp = pbfParser.getPbfTimestamp();
+
+			downloadOsmPlanetUpdates(pbfTimestamp);
+		}
 		catch ( FileNotFoundException e )
 		{
-			System.out.println("File not found: " + e);
-		}
-		catch ( IOException e )
-		{
-			System.out.println("IO error when processing data");
+			System.out.println("Could not open PBF file: " + filename );
 		}
 	}
 
-	public static class PbfParser implements BlockReaderAdapter
+	protected static void downloadOsmPlanetUpdates(
+		Calendar pbfTimestamp )
 	{
-		public boolean skipBlock(FileBlockPosition message) {
-			System.out.println("skipBlock called on " + message.getType());
+		SimpleDateFormat isoFormat =
+			new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-			if ( message.getType().equals("OSMHeader") )
-			{
-				return false;
-			}
-			else
-			{
-				return true;
-			}
-		}
+		System.out.println( "File timestamp: " +
+				isoFormat.format( pbfTimestamp.getTime()) );
 
-		public void handleBlock(FileBlock message)	{
-			System.out.println("Got a fileblock");
-
-			if ( message.getType().equals("OSMHeader") == true )
-			{
-				System.out.println("Got header in handleblock");
-
-				try
-				{
-					Osmformat.HeaderBlock headerBlock = 
-						Osmformat.HeaderBlock.parseFrom(message.getData());	
-
-					if ( headerBlock.hasOsmosisReplicationTimestamp() == true )
-					{
-						long osmosisTimestamp = 
-							headerBlock.getOsmosisReplicationTimestamp();
-
-						/*
-						System.out.println("File timestamp: " + 
-							osmosisTimestamp );
-						*/
-						Calendar calendar = Calendar.getInstance();
-						calendar.setTime( new Date(osmosisTimestamp * 1000) );
-						calendar.add(Calendar.DATE, 1);
-
-						SimpleDateFormat isoFormat = 
-							new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-						System.out.println( "File timestamp: " + 
-							isoFormat.format( calendar.getTime() ) );
-
-					}
-					else
-					{
-						System.out.println("No timestamp");
-					}
-				} 
-				catch ( InvalidProtocolBufferException e )
-				{
-					System.out.println("Invalid protocol buffer");
-				}
-			}
-		}
-
-        public void complete() {
-            System.out.println("Complete!");
-        }
+		// Find timestamps of latest hourly/minute/day files
+		getLatestUpdates();
 	}
-	
 
+	protected static void getLatestUpdates()
+	{
+		URL updateFile;
+		PlanetUpdateStateData minuteUpdates;
 
+		try {
+			updateFile = new URL(
+				"http://planet.openstreetmap.org/replication/minute/state.txt");
+			minuteUpdates = new PlanetUpdateStateData( updateFile );
+    		System.out.println("Minute update sequence number: " +
+            	minuteUpdates.getSequenceNumber() );
+
+		}
+		catch ( MalformedURLException e ) 
+		{
+			System.err.println("Bad URL for minutes"); 
+		}
+	}
 }
-

@@ -28,7 +28,8 @@
 	</target>
 
 	<target name="run" depends="jar">
-		<java fork="true" classname="PlanetPbfUpdate">
+		<java fork="true" classname="planetpbfupdate.PlanetPbfUpdate">
+			<arg value="${pbfFile}"/>
 			<classpath>
 				<path refid="classpath"/>
 				<path location="build/jar/planetpbfupdate.jar"/>
