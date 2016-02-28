@@ -13,6 +13,8 @@ public class OsmPbfParser implements BlockReaderAdapter
 {
 	protected BlockInputStream 	blockStream;
 	protected Calendar 			pbfTimestamp;
+    protected long				sequenceNumber;
+	protected String			replicationBaseUrl;
 
 	public OsmPbfParser(String filename) throws FileNotFoundException
 	{
@@ -33,6 +35,16 @@ public class OsmPbfParser implements BlockReaderAdapter
 		}
 
 		return pbfTimestamp;
+	}
+
+	public long getSequenceNumber()
+	{
+		return sequenceNumber;
+	}
+
+	public String getReplicationBaseUrl()
+	{
+		return replicationBaseUrl;
 	}
 
 	
@@ -77,6 +89,24 @@ public class OsmPbfParser implements BlockReaderAdapter
 				else
 				{
 					System.out.println("No timestamp");
+				}
+
+				if ( headerBlock.hasOsmosisReplicationSequenceNumber() == true )
+				{
+					sequenceNumber = headerBlock.getOsmosisReplicationSequenceNumber();
+				}
+				else
+				{
+					//System.out.println("No sequence number");
+				}
+
+				if ( headerBlock.hasOsmosisReplicationBaseUrl() == true )
+				{
+					replicationBaseUrl = headerBlock.getOsmosisReplicationBaseUrl();
+				}
+				else
+				{
+					//System.out.println("No base URL");
 				}
 			} 
 			catch ( InvalidProtocolBufferException e )
