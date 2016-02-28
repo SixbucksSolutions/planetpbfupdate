@@ -5,6 +5,12 @@ import java.io.*;
 import java.util.Calendar;
 import java.text.SimpleDateFormat;
 import java.net.*;
+import java.util.zip.GZIPInputStream;
+import java.util.Arrays;
+import java.nio.charset.StandardCharsets;
+import javax.xml.parsers.*;
+import org.xml.sax.*;
+import org.w3c.dom.*;
 
 public class PlanetPbfUpdate
 {
@@ -28,7 +34,7 @@ public class PlanetPbfUpdate
 			//long pbfSequenceNumber = pbfParser.getSequenceNumber();
 			//System.out.println("PBF sequence number: " + pbfSequenceNumber );
 
-			//String replicationBaseUrl = pbfParser.getReplicationBaseUrl();
+			//String replicationBinaseUrl = pbfParser.getReplicationBaseUrl();
 			//System.out.println("Base URL: " + replicationBaseUrl );
 
 			downloadOsmPlanetUpdates(pbfTimestamp);
@@ -121,6 +127,11 @@ public class PlanetPbfUpdate
 		long	startingSequenceNumber,
 		long	endingSequenceNumber )
 	{
+
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+
+		// Buffer for uncompressed data
 		for ( 
 			long currSequenceNumber = startingSequenceNumber;
 			currSequenceNumber >= endingSequenceNumber;
@@ -139,8 +150,133 @@ public class PlanetPbfUpdate
             // Get filename (last three digits)
             String filename = String.format( "%03d.osc.gz", currSequenceNumber % 1000 );
 
+			String fullPath = baseUrl.toString() + "/" + fileRelativeDir + filename;
+			/*
 			System.out.println("Full path to current file: " +
 				baseUrl.toString() + "/" + fileRelativeDir + filename );
+			*/
+
+			// 16 MB read buffer
+            final int uncompressedDataSize = 16 * 1024 * 1024;
+            byte[] uncompressedData = new byte[ uncompressedDataSize ];
+			int bytesToProcess;
+
+			try
+			{
+				DocumentBuilder docBuilder = factory.newDocumentBuilder();
+
+				try
+				{
+					InputStream urlInputStream = new URL(fullPath).openStream();
+					InputStream inputStream = new GZIPInputStream( urlInputStream );
+					Document osmChange = docBuilder.parse( inputStream );
+
+					readOsmChange( osmChange.getFirstChild() );
+				}
+				catch ( MalformedURLException e ) 
+				{
+					System.err.println("URL exception with " + fullPath);
+				}
+				catch ( IOException e )
+				{
+					System.err.println("IO Exception with " + fullPath);
+				}
+				catch ( SAXException e )
+				{
+					System.err.println("SAX exception with " + fullPath );
+				}
+			}
+			catch ( ParserConfigurationException e ) 
+			{
+				System.err.println("Could not configure XML parser");
+			}
+
+			break;	
+		}
+	}
+
+	protected static void readOsmChange(
+		Node osmChange )
+	{
+		// Make sure we're at sane starting point
+		if ( osmChange.getNodeName().equals("osmChange") == false )
+		{
+			System.err.println("Did not start reading osmchanges at correct level");
+			return;
+		}
+
+		// Make sure we have a known version
+		if ( osmChange.hasAttributes() == false )
+		{
+			System.err.println("OSM changes does not have attributes, cannot check version");
+			return;
+		}
+
+		NamedNodeMap attributes = osmChange.getAttributes();
+		Node osmChangeVersion = attributes.getNamedItem("version");
+
+		if ( osmChangeVersion == null )
+		{
+			System.out.println("OSM changes does not have version attribute");
+			return;
+		}
+
+		if ( osmChangeVersion.getTextContent().equals("0.6") == false )
+		{
+			System.out.println("Unknown osmChange version: " + osmChangeVersion.getTextContent() );
+			return;
+		}
+
+		System.out.println("Confirmed we are parsing an osmChange v0.6 XML document");
+
+		int siblings = 0;
+
+		Node currNode = osmChange.getNextSibling();
+
+		while ( currNode != null )
+		{
+			siblings++;
+			currNode = currNode.getNextSibling();
+		}
+
+		System.out.println("Number of siblings to osmchange: " + siblings );
+			
+		
+		System.out.println("Children of osmChange: " + osmChange.getChildNodes().getLength() );
+
+		for ( 
+			currNode = osmChange.getFirstChild();
+			currNode != null; 
+			currNode = currNode.getNextSibling() )
+		{
+			if ( (currNode instanceof Text) && (currNode.getNodeValue().trim().equals("") == true) )
+			{
+				continue;
+			}
+			
+			final String currNodeName = currNode.getNodeName();
+			if ( currNodeName.equals("modify") == true )
+			{
+
+			}
+			else if ( currNodeName.equals("delete") == true )
+			{
+				;
+			}
+			else if ( currNodeName.equals("create") == true )
+			{
+				;
+			}
+			else
+			{
+				System.out.println("Unexpected node name: " + currNodeName );
+
+				// What can you tell us about current?
+				if ( currNode.hasChildNodes() == true )
+				{
+					System.out.println("\tHas child nodes");
+				}
+			}
 		}
 	}
 }
