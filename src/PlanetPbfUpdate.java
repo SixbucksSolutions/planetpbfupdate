@@ -257,15 +257,15 @@ public class PlanetPbfUpdate
 			final String currNodeName = currNode.getNodeName();
 			if ( currNodeName.equals("modify") == true )
 			{
-
+				System.out.println("Found modify node");
 			}
 			else if ( currNodeName.equals("delete") == true )
 			{
-				;
+				System.out.println("Found delete node");
 			}
 			else if ( currNodeName.equals("create") == true )
 			{
-				;
+				System.out.println("Found create node");
 			}
 			else
 			{
