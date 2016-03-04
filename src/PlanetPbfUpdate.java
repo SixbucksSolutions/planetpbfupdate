@@ -169,9 +169,8 @@ public class PlanetPbfUpdate
 				{
 					InputStream urlInputStream = new URL(fullPath).openStream();
 					InputStream inputStream = new GZIPInputStream( urlInputStream );
-					Document osmChange = docBuilder.parse( inputStream );
-
-					readOsmChange( osmChange.getFirstChild() );
+	
+					readOsmChange( docBuilder.parse(inputStream).getFirstChild() );
 				}
 				catch ( MalformedURLException e ) 
 				{
@@ -274,7 +273,7 @@ public class PlanetPbfUpdate
 				// What can you tell us about current?
 				if ( currNode.hasChildNodes() == true )
 				{
-					System.out.println("\tHas child nodes");
+					//System.out.println("\tHas child nodes");
 				}
 			}
 		}
