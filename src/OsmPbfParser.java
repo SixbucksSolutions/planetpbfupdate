@@ -11,10 +11,10 @@ import java.util.TimeZone;
 
 public class OsmPbfParser implements BlockReaderAdapter
 {
-    protected BlockInputStream 	blockStream;
-    protected Calendar 			pbfTimestamp;
-    protected long				sequenceNumber;
-    protected String			replicationBaseUrl;
+    protected BlockInputStream  blockStream;
+    protected Calendar          pbfTimestamp;
+    protected long              sequenceNumber;
+    protected String            replicationBaseUrl;
 
     public OsmPbfParser(String filename) throws FileNotFoundException
     {
@@ -49,7 +49,8 @@ public class OsmPbfParser implements BlockReaderAdapter
 
 
 
-    public boolean skipBlock(FileBlockPosition message) {
+    public boolean skipBlock(FileBlockPosition message)
+    {
         System.out.println("skipBlock called on " + message.getType());
 
         if ( message.getType().equals("OSMHeader") )
@@ -62,7 +63,8 @@ public class OsmPbfParser implements BlockReaderAdapter
         }
     }
 
-    public void handleBlock(FileBlock message)	{
+    public void handleBlock(FileBlock message)
+    {
         System.out.println("Got a fileblock");
 
         if ( message.getType().equals("OSMHeader") == true )
@@ -116,7 +118,8 @@ public class OsmPbfParser implements BlockReaderAdapter
         }
     }
 
-    public void complete() {
+    public void complete()
+    {
         System.out.println("Complete!");
     }
 }

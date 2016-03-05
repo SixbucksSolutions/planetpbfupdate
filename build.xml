@@ -15,6 +15,7 @@
 	<target name="beautify">
 		<exec executable="astyle">
 			<arg value="--quiet"/>
+			<arg value="--options=astyle.cfg"/>
 			<arg value="src/*.java"/>
 		</exec>
 	</target>

@@ -11,9 +11,9 @@ import java.io.*;
 
 public class PlanetUpdateStateData
 {
-    protected long 		sequenceNumber;
-    protected Calendar	stateTimestamp;
-    protected String	stateTimestampString;
+    protected long      sequenceNumber;
+    protected Calendar  stateTimestamp;
+    protected String    stateTimestampString;
 
     public PlanetUpdateStateData(URL netLink)
     {
@@ -23,6 +23,7 @@ public class PlanetUpdateStateData
                 new InputStreamReader(netLink.openStream()));
 
             String inputLine;
+
             while ( (inputLine = reader.readLine()) != null )
             {
                 String[] keyValue = inputLine.split("=", 2);
@@ -47,6 +48,7 @@ public class PlanetUpdateStateData
                     //System.out.println(" Converted date: " + stateTimestampString );
                 }
             }
+
             reader.close();
         }
         catch ( IOException e )

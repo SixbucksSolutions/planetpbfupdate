@@ -14,9 +14,12 @@ import org.w3c.dom.*;
 
 public class PlanetPbfUpdate
 {
+    protected final static String supportedOsmChangeVersion = "0.6";
+
     public static void main(String[] args)
     {
         String filename;
+
         if ( args.length == 1 )
         {
             filename = args[0];
@@ -67,7 +70,8 @@ public class PlanetPbfUpdate
         PlanetUpdateStateData dayUpdates;
 
 
-        try {
+        try
+        {
             updateFile = new URL(
                 "http://planet.openstreetmap.org/replication/minute/state.txt");
             minuteUpdates = new PlanetUpdateStateData( updateFile );
@@ -105,9 +109,11 @@ public class PlanetPbfUpdate
                          hourUpdates.getTimestamp().get(Calendar.MINUTE);
 
         System.out.println( "Need to get " + numMinutes + " minute files between " +
-                            minuteUpdates.getTimestampString() + " and " + hourUpdates.getTimestampString() );
+                            minuteUpdates.getTimestampString() + " and " +
+                            hourUpdates.getTimestampString() );
 
-        System.out.println("Starting sequence number: " + minuteUpdates.getSequenceNumber() );
+        System.out.println("Starting sequence number: " +
+                           minuteUpdates.getSequenceNumber() );
 
         long endingSequenceNumber = minuteUpdates.getSequenceNumber() - numMinutes;
         System.out.println("  Ending sequence number: " + endingSequenceNumber );
@@ -124,9 +130,9 @@ public class PlanetPbfUpdate
     }
 
     protected static void getUpdates(
-        URL 	baseUrl,
-        long	startingSequenceNumber,
-        long	endingSequenceNumber )
+        URL     baseUrl,
+        long    startingSequenceNumber,
+        long    endingSequenceNumber )
     {
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -142,9 +148,11 @@ public class PlanetPbfUpdate
             // Build directory string right to left
             long directoryPortion = currSequenceNumber / 1000;
             String fileRelativeDir = new String("");
+
             while ( directoryPortion > 0 )
             {
-                fileRelativeDir = String.format("%03d/", directoryPortion % 1000) + fileRelativeDir;
+                fileRelativeDir = String.format("%03d/",
+                                                directoryPortion % 1000) + fileRelativeDir;
                 directoryPortion /= 1000;
             }
 
@@ -154,7 +162,7 @@ public class PlanetPbfUpdate
             String fullPath = baseUrl.toString() + "/" + fileRelativeDir + filename;
             /*
             System.out.println("Full path to current file: " +
-            	baseUrl.toString() + "/" + fileRelativeDir + filename );
+                baseUrl.toString() + "/" + fileRelativeDir + filename );
             */
 
             // 16 MB read buffer
@@ -170,7 +178,7 @@ public class PlanetPbfUpdate
                 {
                     InputStream inputStream = new GZIPInputStream(
                         new URL(fullPath).openStream() );
-                    System.out.println("Opening " + fullPath);
+                    //System.out.println("Opening " + fullPath);
                     readOsmChange( docBuilder.parse(inputStream).getFirstChild() );
                 }
                 catch ( MalformedURLException e )
@@ -221,13 +229,16 @@ public class PlanetPbfUpdate
             return;
         }
 
-        if ( osmChangeVersion.getTextContent().equals("0.6") == false )
+        if ( osmChangeVersion.getTextContent().equals(supportedOsmChangeVersion) ==
+                false )
         {
-            System.out.println("Unknown osmChange version: " + osmChangeVersion.getTextContent() );
+            System.out.println("Unknown osmChange version: " +
+                               osmChangeVersion.getTextContent() );
             return;
         }
 
-        System.out.println("Confirmed we are parsing an osmChange v0.6 XML document");
+        System.out.println("Confirmed osmChange version (v" +
+                           supportedOsmChangeVersion + ")");
 
         int siblings = 0;
 
@@ -238,47 +249,61 @@ public class PlanetPbfUpdate
             currNode != null;
             currNode = currNode.getNextSibling() )
         {
-            if ( (currNode.getNodeType() == Node.TEXT_NODE) && (currNode.getNodeValue().trim().equals("") == true) )
+            if ( (currNode.getNodeType() == Node.TEXT_NODE) &&
+                    (currNode.getNodeValue().trim().equals("") == true) )
             {
                 continue;
             }
 
-            final String currNodeName = currNode.getNodeName();
-            if ( currNodeName.equals("modify") == true )
-            {
-                System.out.println("Found modify node");
-
-                processChanges(currNode);
-            }
-            else if ( currNodeName.equals("delete") == true )
-            {
-                System.out.println("Found delete node");
-
-                processChanges(currNode);
-            }
-            else if ( currNodeName.equals("create") == true )
-            {
-                System.out.println("Found create node");
-                processChanges(currNode);
-            }
-            else
-            {
-                System.out.println("Unexpected node name: " + currNodeName );
-
-                // What can you tell us about current?
-                if ( currNode.hasChildNodes() == true )
-                {
-                    //System.out.println("\tHas child nodes");
-                }
-            }
+            processChanges(currNode);
         }
     }
 
     protected static void processChanges(
         Node currNode )
     {
+        final String currNodeName = currNode.getNodeName();
 
+        if ( currNodeName.equals("modify") == true )
+        {
+            System.out.println("Found modify node");
+
+            processModifySection(currNode);
+        }
+        else if ( currNodeName.equals("delete") == true )
+        {
+            System.out.println("Found delete node");
+        }
+        else if ( currNodeName.equals("create") == true )
+        {
+            System.out.println("Found create node");
+        }
+        else
+        {
+            System.out.println("Unexpected node name: " + currNodeName );
+
+            // What can you tell us about current?
+            if ( currNode.hasChildNodes() == true )
+            {
+                //System.out.println("\tHas child nodes");
+            }
+        }
 
     }
 
+    protected static void processModifySection(
+        Node sectionNode )
+    {
+        int numModifies = 0;
+
+        for (
+            Node currNode = sectionNode.getFirstChild();
+            currNode != null;
+            currNode = currNode.getNextSibling() )
+        {
+            numModifies++;
+        }
+
+        System.out.println( numModifies + " entries in modify section");
+    }
 }
