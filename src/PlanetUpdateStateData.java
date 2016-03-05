@@ -34,7 +34,7 @@ public class PlanetUpdateStateData
                 }
                 else if ( keyValue[0].equals("timestamp") == true )
                 {
-                    DateFormat format = new SimpleDateFormat( "yyyy-mm-dd'T'HH\\:mm\\:ss'Z'");
+                    DateFormat format = new SimpleDateFormat( "yyyy-MM-dd'T'HH\\:mm\\:ss'Z'");
                     stateTimestamp = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
                     stateTimestamp.setTime( format.parse(keyValue[1]));
                     stateTimestamp.add(Calendar.MONTH, 1);

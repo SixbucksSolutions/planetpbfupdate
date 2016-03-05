@@ -11,6 +11,10 @@ import java.nio.charset.StandardCharsets;
 import javax.xml.parsers.*;
 import org.xml.sax.*;
 import org.w3c.dom.*;
+import crosby.binary.*;
+import java.text.DateFormat;
+import java.util.TimeZone;
+import java.text.ParseException;
 
 public class PlanetPbfUpdate
 {
@@ -294,16 +298,133 @@ public class PlanetPbfUpdate
     protected static void processModifySection(
         Node sectionNode )
     {
-        int numModifies = 0;
-
         for (
             Node currNode = sectionNode.getFirstChild();
             currNode != null;
             currNode = currNode.getNextSibling() )
         {
-            numModifies++;
-        }
+            // Skip text nodes
+            if ( currNode.getNodeType() == Node.TEXT_NODE )
+            {
+                continue;
+            }
 
-        System.out.println( numModifies + " entries in modify section");
+            final String modifyType = currNode.getNodeName();
+
+            if ( modifyType.equals("node") == true )
+            {
+                // Get attributes for the new node
+                if ( currNode.hasAttributes() == false )
+                {
+                    System.err.println("Modify node section with no attrs, invalid");
+                    continue;
+                }
+
+                // Create node builder
+                Osmformat.Node.Builder nodeBuilder = Osmformat.Node.newBuilder();
+
+                // Create info builder for node info
+                Osmformat.Info.Builder infoBuilder = Osmformat.Info.newBuilder();
+
+                // See what attrs we got
+                NamedNodeMap nodeAttributes = currNode.getAttributes();
+
+                for ( int i = 0; i < nodeAttributes.getLength(); ++i )
+                {
+                    Node currAttr = nodeAttributes.item(i);
+                    //System.out.println("Attribute name: " + currAttr.getNodeName() );
+                    //System.out.println("Attribute value: "    + currAttr.getNodeValue() );
+
+                    final String nodeAttrName = currAttr.getNodeName();
+
+                    if ( nodeAttrName.equals("changeset") == true )
+                    {
+                        infoBuilder.setChangeset(Long.parseLong(currAttr.getNodeValue()));
+                    }
+                    else if ( nodeAttrName.equals("id") == true )
+                    {
+                        nodeBuilder.setId(Long.parseLong(currAttr.getNodeValue()));
+                    }
+                    else if ( nodeAttrName.equals("lat") == true )
+                    {
+                        //System.out.println("Node lat: " + currAttr.getNodeValue());
+                        nodeBuilder.setLat(convertToNanodegrees(Double.parseDouble(
+                                currAttr.getNodeValue())));
+
+                        /*
+                        System.out.println("converted lat of " + currAttr.getNodeValue() + " to " +
+                            nodeBuilder.getLat() );
+                        */
+                    }
+                    else if ( nodeAttrName.equals("lon") == true )
+                    {
+                        nodeBuilder.setLon(convertToNanodegrees(Double.parseDouble(
+                                currAttr.getNodeValue())));
+                    }
+                    else if ( nodeAttrName.equals("timestamp") == true )
+                    {
+                        //System.out.println("Timestamp: " + currAttr.getNodeValue() );
+                        DateFormat format = new SimpleDateFormat( "yyyy-MM-dd'T'HH':'mm':'ss'Z'");
+                        Calendar nodeTimestamp = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+
+                        try
+                        {
+                            nodeTimestamp.setTime( format.parse(currAttr.getNodeValue()) );
+                        }
+                        catch ( ParseException e )
+                        {
+                            System.err.println("Invalid date parse on " + currAttr.getNodeValue() +
+                                               ":" + e );
+                        }
+
+                        nodeTimestamp.add(Calendar.MONTH, 1);
+
+
+                        //infoBuilder.setTimestamp(
+                    }
+                    else if ( nodeAttrName.equals("uid") == true )
+                    {
+                        ;
+                    }
+                    else if ( nodeAttrName.equals("user") == true )
+                    {
+                        ;
+                    }
+                    else if ( nodeAttrName.equals("version") == true )
+                    {
+                        ;
+                    }
+                    else
+                    {
+                        System.out.println("Invalid attribute: " + nodeAttrName);
+                    }
+                }
+
+
+
+
+                //Osmformat.Node modifiedNode = nodeBuilder.build();
+
+
+            }
+            else if ( modifyType.equals("way") == true )
+            {
+                ;
+            }
+            else if ( modifyType.equals("relation") == true )
+            {
+                ;
+            }
+            else
+            {
+                System.err.println("Invalid modify type: " + modifyType );
+            }
+        }
+    }
+
+    protected static long convertToNanodegrees(
+        double fullDegrees )
+    {
+        return (long)(fullDegrees * 10000000);
     }
 }
