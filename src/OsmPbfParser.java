@@ -11,113 +11,113 @@ import java.util.TimeZone;
 
 public class OsmPbfParser implements BlockReaderAdapter
 {
-	protected BlockInputStream 	blockStream;
-	protected Calendar 			pbfTimestamp;
+    protected BlockInputStream 	blockStream;
+    protected Calendar 			pbfTimestamp;
     protected long				sequenceNumber;
-	protected String			replicationBaseUrl;
+    protected String			replicationBaseUrl;
 
-	public OsmPbfParser(String filename) throws FileNotFoundException
-	{
-		InputStream input = new FileInputStream(filename);
+    public OsmPbfParser(String filename) throws FileNotFoundException
+    {
+        InputStream input = new FileInputStream(filename);
 
-		blockStream = new BlockInputStream(input, this);
-	}
+        blockStream = new BlockInputStream(input, this);
+    }
 
-	public Calendar getPbfTimestamp()
-	{
-		try 
-		{
-			blockStream.process();
-		}
-		catch ( IOException e )
-		{
-			System.out.println("IO exception when processing blocks");
-		}
+    public Calendar getPbfTimestamp()
+    {
+        try
+        {
+            blockStream.process();
+        }
+        catch ( IOException e )
+        {
+            System.out.println("IO exception when processing blocks");
+        }
 
-		return pbfTimestamp;
-	}
+        return pbfTimestamp;
+    }
 
-	public long getSequenceNumber()
-	{
-		return sequenceNumber;
-	}
+    public long getSequenceNumber()
+    {
+        return sequenceNumber;
+    }
 
-	public String getReplicationBaseUrl()
-	{
-		return replicationBaseUrl;
-	}
+    public String getReplicationBaseUrl()
+    {
+        return replicationBaseUrl;
+    }
 
-	
 
-	public boolean skipBlock(FileBlockPosition message) {
-		System.out.println("skipBlock called on " + message.getType());
 
-		if ( message.getType().equals("OSMHeader") )
-		{
-			return false;
-		}
-		else
-		{
-			return true;
-		}
-	}
+    public boolean skipBlock(FileBlockPosition message) {
+        System.out.println("skipBlock called on " + message.getType());
 
-	public void handleBlock(FileBlock message)	{
-		System.out.println("Got a fileblock");
+        if ( message.getType().equals("OSMHeader") )
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
 
-		if ( message.getType().equals("OSMHeader") == true )
-		{
-			System.out.println("Got header in handleblock");
+    public void handleBlock(FileBlock message)	{
+        System.out.println("Got a fileblock");
 
-			try
-			{
-				Osmformat.HeaderBlock headerBlock = 
-					Osmformat.HeaderBlock.parseFrom(message.getData());	
+        if ( message.getType().equals("OSMHeader") == true )
+        {
+            System.out.println("Got header in handleblock");
 
-				if ( headerBlock.hasOsmosisReplicationTimestamp() == true )
-				{
-					TimeZone currTz = Calendar.getInstance().getTimeZone();
-					long osmosisTimestamp = 
-						headerBlock.getOsmosisReplicationTimestamp();
-					int offsetFromUTC = currTz.getOffset(osmosisTimestamp);
+            try
+            {
+                Osmformat.HeaderBlock headerBlock =
+                    Osmformat.HeaderBlock.parseFrom(message.getData());
 
-					pbfTimestamp = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-					pbfTimestamp.setTime( new Date(osmosisTimestamp * 1000) );
-					// Subtract offset to get UTC
-					pbfTimestamp.add(Calendar.MILLISECOND, -offsetFromUTC);
-				}
-				else
-				{
-					System.out.println("No timestamp");
-				}
+                if ( headerBlock.hasOsmosisReplicationTimestamp() == true )
+                {
+                    TimeZone currTz = Calendar.getInstance().getTimeZone();
+                    long osmosisTimestamp =
+                        headerBlock.getOsmosisReplicationTimestamp();
+                    int offsetFromUTC = currTz.getOffset(osmosisTimestamp);
 
-				if ( headerBlock.hasOsmosisReplicationSequenceNumber() == true )
-				{
-					sequenceNumber = headerBlock.getOsmosisReplicationSequenceNumber();
-				}
-				else
-				{
-					//System.out.println("No sequence number");
-				}
+                    pbfTimestamp = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+                    pbfTimestamp.setTime( new Date(osmosisTimestamp * 1000) );
+                    // Subtract offset to get UTC
+                    pbfTimestamp.add(Calendar.MILLISECOND, -offsetFromUTC);
+                }
+                else
+                {
+                    System.out.println("No timestamp");
+                }
 
-				if ( headerBlock.hasOsmosisReplicationBaseUrl() == true )
-				{
-					replicationBaseUrl = headerBlock.getOsmosisReplicationBaseUrl();
-				}
-				else
-				{
-					//System.out.println("No base URL");
-				}
-			} 
-			catch ( InvalidProtocolBufferException e )
-			{
-				System.out.println("Invalid protocol buffer");
-			}
-		}
-	}
+                if ( headerBlock.hasOsmosisReplicationSequenceNumber() == true )
+                {
+                    sequenceNumber = headerBlock.getOsmosisReplicationSequenceNumber();
+                }
+                else
+                {
+                    //System.out.println("No sequence number");
+                }
+
+                if ( headerBlock.hasOsmosisReplicationBaseUrl() == true )
+                {
+                    replicationBaseUrl = headerBlock.getOsmosisReplicationBaseUrl();
+                }
+                else
+                {
+                    //System.out.println("No base URL");
+                }
+            }
+            catch ( InvalidProtocolBufferException e )
+            {
+                System.out.println("Invalid protocol buffer");
+            }
+        }
+    }
 
     public void complete() {
-   		System.out.println("Complete!");
-	}
+        System.out.println("Complete!");
+    }
 }
-	
+
