@@ -3,6 +3,7 @@ package planetpbfupdate;
 import crosby.binary.file.*;
 import java.io.*;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.text.SimpleDateFormat;
 import java.net.*;
 import java.util.zip.GZIPInputStream;
@@ -165,9 +166,9 @@ public class PlanetPbfUpdate
 
             String fullPath = baseUrl.toString() + "/" + fileRelativeDir + filename;
             /*
-            System.out.println("Full path to current file: " +
-                baseUrl.toString() + "/" + fileRelativeDir + filename );
-            */
+               System.out.println("Full path to current file: " +
+               baseUrl.toString() + "/" + fileRelativeDir + filename );
+             */
 
             // 16 MB read buffer
             final int uncompressedDataSize = 16 * 1024 * 1024;
@@ -313,113 +314,126 @@ public class PlanetPbfUpdate
 
             if ( modifyType.equals("node") == true )
             {
-                // Get attributes for the new node
-                if ( currNode.hasAttributes() == false )
+                NewOrUpdatedNode parsedNode = parseNode(currNode);
+            }
+        }
+    }
+
+    public static NewOrUpdatedNode parseNode(
+        Node currNode )
+    {
+        // Get attributes for the new node
+        if ( currNode.hasAttributes() == false )
+        {
+            System.err.println("Modify node section with no attrs, invalid");
+            return null;
+        }
+
+        // Create node builder
+        Osmformat.Node.Builder nodeBuilder = Osmformat.Node.newBuilder();
+
+        // Create info builder for node info
+        Osmformat.Info.Builder infoBuilder = Osmformat.Info.newBuilder();
+
+        // See what attrs we got
+        NamedNodeMap nodeAttributes = currNode.getAttributes();
+
+        String username = new String();
+
+        for ( int i = 0; i < nodeAttributes.getLength(); ++i )
+        {
+            Node currAttr = nodeAttributes.item(i);
+            //System.out.println("Attribute name: " + currAttr.getNodeName() );
+            //System.out.println("Attribute value: "    + currAttr.getNodeValue() );
+
+            final String nodeAttrName = currAttr.getNodeName();
+
+            if ( nodeAttrName.equals("changeset") == true )
+            {
+                infoBuilder.setChangeset(Long.parseLong(currAttr.getNodeValue()));
+            }
+            else if ( nodeAttrName.equals("id") == true )
+            {
+                nodeBuilder.setId(Long.parseLong(currAttr.getNodeValue()));
+            }
+            else if ( nodeAttrName.equals("lat") == true )
+            {
+                //System.out.println("Node lat: " + currAttr.getNodeValue());
+                nodeBuilder.setLat(convertToNanodegrees(Double.parseDouble(
+                        currAttr.getNodeValue())));
+
+                /*
+                   System.out.println("converted lat of " + currAttr.getNodeValue() + " to " +
+                   nodeBuilder.getLat() );
+                 */
+            }
+            else if ( nodeAttrName.equals("lon") == true )
+            {
+                nodeBuilder.setLon(convertToNanodegrees(Double.parseDouble(
+                        currAttr.getNodeValue())));
+            }
+            else if ( nodeAttrName.equals("timestamp") == true )
+            {
+                //System.out.println("Timestamp: " + currAttr.getNodeValue() );
+                DateFormat format = new SimpleDateFormat( "yyyy-MM-dd'T'HH':'mm':'ss'Z'");
+                Calendar nodeTimestamp = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+
+                try
                 {
-                    System.err.println("Modify node section with no attrs, invalid");
-                    continue;
+                    nodeTimestamp.setTime( format.parse(currAttr.getNodeValue()) );
+                }
+                catch ( ParseException e )
+                {
+                    System.err.println("Invalid date parse on " + currAttr.getNodeValue() +
+                                       ":" + e );
                 }
 
-                // Create node builder
-                Osmformat.Node.Builder nodeBuilder = Osmformat.Node.newBuilder();
+                nodeTimestamp.add(Calendar.MONTH, 1);
 
-                // Create info builder for node info
-                Osmformat.Info.Builder infoBuilder = Osmformat.Info.newBuilder();
+                TimeZone tz = TimeZone.getDefault();
+                Calendar cal = GregorianCalendar.getInstance(tz);
+                int offsetFromUTC = tz.getOffset(cal.getTimeInMillis());
 
-                // See what attrs we got
-                NamedNodeMap nodeAttributes = currNode.getAttributes();
-
-                for ( int i = 0; i < nodeAttributes.getLength(); ++i )
-                {
-                    Node currAttr = nodeAttributes.item(i);
-                    //System.out.println("Attribute name: " + currAttr.getNodeName() );
-                    //System.out.println("Attribute value: "    + currAttr.getNodeValue() );
-
-                    final String nodeAttrName = currAttr.getNodeName();
-
-                    if ( nodeAttrName.equals("changeset") == true )
-                    {
-                        infoBuilder.setChangeset(Long.parseLong(currAttr.getNodeValue()));
-                    }
-                    else if ( nodeAttrName.equals("id") == true )
-                    {
-                        nodeBuilder.setId(Long.parseLong(currAttr.getNodeValue()));
-                    }
-                    else if ( nodeAttrName.equals("lat") == true )
-                    {
-                        //System.out.println("Node lat: " + currAttr.getNodeValue());
-                        nodeBuilder.setLat(convertToNanodegrees(Double.parseDouble(
-                                currAttr.getNodeValue())));
-
-                        /*
-                        System.out.println("converted lat of " + currAttr.getNodeValue() + " to " +
-                            nodeBuilder.getLat() );
-                        */
-                    }
-                    else if ( nodeAttrName.equals("lon") == true )
-                    {
-                        nodeBuilder.setLon(convertToNanodegrees(Double.parseDouble(
-                                currAttr.getNodeValue())));
-                    }
-                    else if ( nodeAttrName.equals("timestamp") == true )
-                    {
-                        //System.out.println("Timestamp: " + currAttr.getNodeValue() );
-                        DateFormat format = new SimpleDateFormat( "yyyy-MM-dd'T'HH':'mm':'ss'Z'");
-                        Calendar nodeTimestamp = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-
-                        try
-                        {
-                            nodeTimestamp.setTime( format.parse(currAttr.getNodeValue()) );
-                        }
-                        catch ( ParseException e )
-                        {
-                            System.err.println("Invalid date parse on " + currAttr.getNodeValue() +
-                                               ":" + e );
-                        }
-
-                        nodeTimestamp.add(Calendar.MONTH, 1);
+                nodeTimestamp.add(Calendar.MILLISECOND, offsetFromUTC);
 
 
-                        //infoBuilder.setTimestamp(
-                    }
-                    else if ( nodeAttrName.equals("uid") == true )
-                    {
-                        ;
-                    }
-                    else if ( nodeAttrName.equals("user") == true )
-                    {
-                        ;
-                    }
-                    else if ( nodeAttrName.equals("version") == true )
-                    {
-                        ;
-                    }
-                    else
-                    {
-                        System.out.println("Invalid attribute: " + nodeAttrName);
-                    }
-                }
+                /*
+                   System.out.println("Got " +
+                   nodeTimestamp.get(Calendar.YEAR) + "-" +
+                   nodeTimestamp.get(Calendar.MONTH) + "-" +
+                   nodeTimestamp.get(Calendar.DATE) + " " +
+                   nodeTimestamp.get(Calendar.HOUR_OF_DAY) + ":" +
+                   nodeTimestamp.get(Calendar.MINUTE) + ":" +
+                   nodeTimestamp.get(Calendar.SECOND) + " for " +
+                   currAttr.getNodeValue() );
+                 */
 
-
-
-
-                //Osmformat.Node modifiedNode = nodeBuilder.build();
-
-
+                infoBuilder.setTimestamp(nodeTimestamp.getTimeInMillis());
             }
-            else if ( modifyType.equals("way") == true )
+            else if ( nodeAttrName.equals("uid") == true )
             {
-                ;
+                infoBuilder.setUid(Integer.parseInt(currAttr.getNodeValue()));
             }
-            else if ( modifyType.equals("relation") == true )
+            else if ( nodeAttrName.equals("user") == true )
             {
-                ;
+                username = currAttr.getNodeValue();
+            }
+            else if ( nodeAttrName.equals("version") == true )
+            {
+                infoBuilder.setVersion(Integer.parseInt(currAttr.getNodeValue()));
             }
             else
             {
-                System.err.println("Invalid modify type: " + modifyType );
+                System.out.println("Invalid attribute: " + nodeAttrName);
             }
         }
+
+        nodeBuilder.setInfo(infoBuilder);
+
+        NewOrUpdatedNode returnNode = new NewOrUpdatedNode(nodeBuilder.build(),
+                username);
+
+        return returnNode;
     }
 
     protected static long convertToNanodegrees(
