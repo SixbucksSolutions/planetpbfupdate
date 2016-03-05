@@ -167,9 +167,9 @@ public class PlanetPbfUpdate
 
 				try
 				{
-					InputStream urlInputStream = new URL(fullPath).openStream();
-					InputStream inputStream = new GZIPInputStream( urlInputStream );
-	
+					InputStream inputStream = new GZIPInputStream( 
+						new URL(fullPath).openStream() );
+					System.out.println("Opening " + fullPath);
 					readOsmChange( docBuilder.parse(inputStream).getFirstChild() );
 				}
 				catch ( MalformedURLException e ) 
@@ -230,25 +230,14 @@ public class PlanetPbfUpdate
 
 		int siblings = 0;
 
-		Node currNode = osmChange.getNextSibling();
-
-		while ( currNode != null )
-		{
-			siblings++;
-			currNode = currNode.getNextSibling();
-		}
-
-		System.out.println("Number of siblings to osmchange: " + siblings );
-			
-		
-		System.out.println("Children of osmChange: " + osmChange.getChildNodes().getLength() );
+		Node currNode; 
 
 		for ( 
 			currNode = osmChange.getFirstChild();
 			currNode != null; 
 			currNode = currNode.getNextSibling() )
 		{
-			if ( (currNode instanceof Text) && (currNode.getNodeValue().trim().equals("") == true) )
+			if ( (currNode.getNodeType() == Node.TEXT_NODE) && (currNode.getNodeValue().trim().equals("") == true) )
 			{
 				continue;
 			}
@@ -257,14 +246,19 @@ public class PlanetPbfUpdate
 			if ( currNodeName.equals("modify") == true )
 			{
 				System.out.println("Found modify node");
+
+				processChanges(currNode);
 			}
 			else if ( currNodeName.equals("delete") == true )
 			{
 				System.out.println("Found delete node");
+
+				processChanges(currNode);
 			}
 			else if ( currNodeName.equals("create") == true )
 			{
 				System.out.println("Found create node");
+				processChanges(currNode);
 			}
 			else
 			{
@@ -278,4 +272,12 @@ public class PlanetPbfUpdate
 			}
 		}
 	}
+
+	protected static void processChanges(
+		Node currNode )
+	{
+		
+
+	}
+		
 }
