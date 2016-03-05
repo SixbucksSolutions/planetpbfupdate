@@ -12,14 +12,14 @@
 		<fileset dir="${javalib.dir}" 	includes="protobuf.jar"/>
 	</path>	
 
-	<target name="prettify">
+	<target name="beautify">
 		<exec executable="astyle">
 			<arg value="--quiet"/>
 			<arg value="src/*.java"/>
 		</exec>
 	</target>
 
-	<target name="compile" depends="prettify">
+	<target name="compile" depends="beautify">
 		<mkdir dir="build/classes"/>
 		<javac srcdir="src" destdir="build/classes" classpathref="classpath" 
 			includeantruntime="false"/>
