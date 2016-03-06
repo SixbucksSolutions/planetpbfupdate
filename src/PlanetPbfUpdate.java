@@ -428,6 +428,8 @@ public class PlanetPbfUpdate
             }
         }
 
+		// TODO: need to read key/values for tags here and assign into NewOrUpdatedNode	
+
         nodeBuilder.setInfo(infoBuilder);
 
         NewOrUpdatedNode returnNode = new NewOrUpdatedNode(nodeBuilder.build(),
