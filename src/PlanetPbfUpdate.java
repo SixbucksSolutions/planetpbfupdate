@@ -16,6 +16,7 @@ import crosby.binary.*;
 import java.text.DateFormat;
 import java.util.TimeZone;
 import java.text.ParseException;
+import java.util.HashMap;
 
 public class PlanetPbfUpdate
 {
@@ -338,7 +339,7 @@ public class PlanetPbfUpdate
         // See what attrs we got
         NamedNodeMap nodeAttributes = currNode.getAttributes();
 
-        String username = new String();
+		String username = "";
 
         for ( int i = 0; i < nodeAttributes.getLength(); ++i )
         {
@@ -428,12 +429,38 @@ public class PlanetPbfUpdate
             }
         }
 
-		// TODO: need to read key/values for tags here and assign into NewOrUpdatedNode	
+
+        HashMap nodeTags = new HashMap();
+
+        // Read tag values
+        if ( currNode.hasChildNodes() )
+        {
+            //System.out.println("Modified OSM node has child entries");
+
+            int i = 0;
+
+            for (
+                Node childNode = currNode.getFirstChild();
+                childNode != null;
+                childNode = childNode.getNextSibling() )
+            {
+                if ( childNode.getNodeName().equals("tag") == true )
+                {
+                    NamedNodeMap attributes = childNode.getAttributes();
+                    nodeTags.put( attributes.getNamedItem("k"), attributes.getNamedItem("v") );
+					/*
+                    System.out.println("Added tag, " +
+                                       attributes.getNamedItem("k") + " => " +
+                                       attributes.getNamedItem("v") );
+					*/
+                }
+            }
+        }
 
         nodeBuilder.setInfo(infoBuilder);
 
         NewOrUpdatedNode returnNode = new NewOrUpdatedNode(nodeBuilder.build(),
-                username);
+                username, nodeTags);
 
         return returnNode;
     }
