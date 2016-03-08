@@ -16,6 +16,7 @@ import crosby.binary.*;
 import java.text.DateFormat;
 import java.util.TimeZone;
 import java.text.ParseException;
+import java.util.Map;
 import java.util.HashMap;
 
 public class PlanetPbfUpdate
@@ -339,7 +340,7 @@ public class PlanetPbfUpdate
         // See what attrs we got
         NamedNodeMap nodeAttributes = currNode.getAttributes();
 
-		String username = "";
+        String username = "";
 
         for ( int i = 0; i < nodeAttributes.getLength(); ++i )
         {
@@ -430,7 +431,7 @@ public class PlanetPbfUpdate
         }
 
 
-        HashMap nodeTags = new HashMap();
+        Map<String, String> nodeTags = new HashMap<String, String>();
 
         // Read tag values
         if ( currNode.hasChildNodes() )
@@ -447,12 +448,14 @@ public class PlanetPbfUpdate
                 if ( childNode.getNodeName().equals("tag") == true )
                 {
                     NamedNodeMap attributes = childNode.getAttributes();
-                    nodeTags.put( attributes.getNamedItem("k"), attributes.getNamedItem("v") );
-					/*
+                    nodeTags.put(
+                        attributes.getNamedItem("k").getTextContent(),
+                        attributes.getNamedItem("v").getTextContent() );
+                    /*
                     System.out.println("Added tag, " +
                                        attributes.getNamedItem("k") + " => " +
                                        attributes.getNamedItem("v") );
-					*/
+                    */
                 }
             }
         }
