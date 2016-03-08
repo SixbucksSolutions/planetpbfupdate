@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class NewOrUpdatedPrimitive
 {
-    protected enum PrimitiveType
+    public enum PrimitiveType
     {
         NODE,
         WAY,
@@ -24,7 +24,7 @@ public class NewOrUpdatedPrimitive
     }
 
     public NewOrUpdatedPrimitive(
-        Osmformat.Way          	baseWay,
+        Osmformat.Way           baseWay,
         String                  username,
         Map<String, String>     tags )
     {
