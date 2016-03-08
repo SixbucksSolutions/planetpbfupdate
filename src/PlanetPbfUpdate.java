@@ -316,12 +316,12 @@ public class PlanetPbfUpdate
 
             if ( modifyType.equals("node") == true )
             {
-                NewOrUpdatedNode parsedNode = parseNode(currNode);
+                NewOrUpdatedPrimitive parsedNode = parseNode(currNode);
             }
         }
     }
 
-    public static NewOrUpdatedNode parseNode(
+    public static NewOrUpdatedPrimitive parseNode(
         Node currNode )
     {
         // Get attributes for the new node
@@ -462,8 +462,9 @@ public class PlanetPbfUpdate
 
         nodeBuilder.setInfo(infoBuilder);
 
-        NewOrUpdatedNode returnNode = new NewOrUpdatedNode(nodeBuilder.build(),
-                username, nodeTags);
+        NewOrUpdatedPrimitive returnNode = new NewOrUpdatedPrimitive(
+            nodeBuilder.build(),
+            username, nodeTags);
 
         return returnNode;
     }
